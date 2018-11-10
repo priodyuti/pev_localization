@@ -1,0 +1,83 @@
+%%
+function  ER_greedy(N, k, Iter)
+  clc
+  fprintf('Number of nodes: %d\n', N);
+  fprintf('Average degree: %d\n', k);
+  fprintf('Number of Iterations: %d\n', Iter);
+  p = k/N;
+  fprintf('Connection probability: %f\n', p);
+  %A = zeros(N,N);
+
+  path1 = '/home/priodyuti/Dropbox/RS/Reports/Criticality-of-PEV-Localization/codes/matlab_code/Data/ipr.txt'; 
+  path2 = '/home/priodyuti/Dropbox/RS/Reports/Criticality-of-PEV-Localization/codes/matlab_code/Data/ER_opt.txt'; 
+
+  fd1 = fopen(path1,'wt');
+  fd2 = fopen(path2,'wt'); 
+
+
+  [A Edges] = ER_Random(N, p);
+  fprintf('Number of edges: %d\n\n', Edges);
+  %A
+  [evec1,eval1] = eig(A);
+  evals = diag(eval1);
+  max_eig_val = evals(N);
+  sec_max_eig_val = evals(N-1);
+  c1 = sum(evec1(:,N).^4);
+  %[max_deg max_index] = max(sum(A,2));
+  
+  e1 = abs(evec1(:,N));
+  e2 = evec1(:,N-1);
+
+  d1 = dot(e1, e1);
+  d2 = dot(e1, e2);
+
+  clear evec1 eval1
+  Flag = 0;
+  fprintf(fd1,'%d %f %f %f %f %f %f %f\n', Flag, c1, c1, max_eig_val, sec_max_eig_val, min(evals), d1, d2);
+ 
+  for iter = 2:Iter 
+
+    Flag = 0;
+    [A_New] = Edge_Rewiring(A, N, Edges);
+
+    [evec1 eval1] = eig(A_New);
+    evals = diag(eval1);
+    max_eig_val = evals(N);
+    sec_max_eig_val = evals(N-1);
+    c2 = sum(evec1(:,N).^4);
+    
+    %----------------------------
+    ev1 = abs(evec1(:, N));
+    ev2 = evec1(:, N-1);
+
+    d1 = dot(e1, ev1);
+    d2 = dot(e1, ev2);
+    %-----------------------------
+    e1 = ev1;
+
+    clear evec1 eval1
+    
+    if c2 > c1
+      A = A_New; 
+      c1 = c2;
+      Flag = 1; 
+    end
+  
+    fprintf(fd1,'%d %f %f %f %f %f %f %f\n', Flag, c1, c2, max_eig_val, sec_max_eig_val, min(evals), d1, d2);      
+    clear A_New
+  end
+  %A
+  %hist(diag(A))
+  for i=1:N
+    for j=i:N
+      if A(i,j) ~= 0
+        fprintf(fd2,'%d %d %f\n',i,j,A(i,j));
+      end 
+    end
+  end
+  fclose(fd1);
+  fclose(fd2);
+  clear all
+  fprintf('\nCompletes...\n');
+ 
+end

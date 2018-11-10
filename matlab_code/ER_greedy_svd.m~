@@ -1,0 +1,65 @@
+%%
+function  ER_greedy_svd(N, k, Iter)
+  clc
+  fprintf('Number of nodes: %d\n', N);
+  fprintf('Average degree: %d\n', k);
+  fprintf('Number of Iterations: %d\n', Iter);
+  p = k/N;
+  fprintf('Connection probability: %f\n', p);
+  %A = zeros(N,N);
+
+  path1 = '/home/priodyuti/Dropbox/RS/Reports/Localization-of-Real-systems/matlab_code/Data/ipr.txt'; 
+  path2 = '/home/priodyuti/Dropbox/RS/Reports/Localization-of-Real-systems/matlab_code/Data/ER_opt.txt'; 
+
+  fd1 = fopen(path1, 'wt');
+  fd2 = fopen(path2, 'wt'); 
+
+  [A Edges] = ER_Random(N, p);
+  fprintf('Number of edges: %d\n\n', Edges);
+  %A
+  [U S V] = svd(A);
+  sval = diag(S);
+  max_singular_val = sval(1);
+  sec_max_singular_val = sval(2);
+  c1 = sum(U(:,1).^4);
+
+  clear U S V 
+  Flag = 0;
+  fprintf(fd1,'%d %f %f %f %f\n', Flag, c1, c1, max_singular_val, sec_max_singular_val);
+ 
+  for iter = 2:Iter 
+
+    Flag = 0;
+    [A_New] = Edge_Rewiring(A, N, Edges);
+
+    [U S V] = svd(A_New);
+    sval = diag(S);
+    max_singular_val = sval(1);
+    sec_max_singular_val = sval(2);
+    c2 = sum(U(:,1).^4);
+    
+    clear U S V
+    
+    if c2 > c1
+      A = A_New; 
+      c1 = c2;
+      Flag = 1; 
+    end
+  
+    fprintf(fd1,'%d %f %f %f %f\n', Flag, c1, c2, max_singular_val, sec_max_singular_val);      
+    clear A_New
+  end
+
+  for i=1:N
+    for j=i:N
+      if A(i,j) ~= 0
+        fprintf(fd2,'%d %d\n',i, j);
+      end 
+    end
+  end
+  fclose(fd1);
+  fclose(fd2);
+  clear all
+  fprintf('\nCompletes...\n');
+ 
+end
